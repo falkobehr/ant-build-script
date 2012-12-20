@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="build" default="deploy" basedir="..">
+
+
+	<!--Project description-->
+	<description>A client-side ANT build script</description>
+
+
+	<!--Get properties-->
+	<property file="${basedir}/build/config/project.properties"/>
+
+
+	<!--Show all possible targets-->
+	<target name="help" description="Show all possible targets">
+		<echo>
+		${project.name}: available tasks
+		====================================
+		default: deploy
+
+		target:  deploy	[deploy.css,deploy.js,deploy.img]
+
+		target:  deploy.css [-css.concatenate,-css.minify]
+		target:  deploy.js  [-js.concatenate,-js.remove.logs,-js.minify]
+
+		target:  deploy.img [-init,-img.png.optimize,-img.jpg.optimize]
+
+		</echo>
+	</target>
+
+
+
+	<!--Initialize deploy-->
+	<target name="-init" description="Create build directory structure">
+		<!--Clean deploy directories-->
+		<delete dir="${img.deploy.dir}"/>
+		<mkdir dir="${img.deploy.dir}"/>
+		<!--Create the time stamp for the new build-->
+		<tstamp>
+			<format property="today" pattern="EEE, d MMM yyyy HH:mm:ss Z"/>
+		</tstamp>
+		<echo>Finished.</echo>
+	</target>
+
+
+
+	<!--Concatenate CSS files-->
+	<target name="-css.concatenate" description="Concatenates specified CSS files">
+		<concat destfile="${css.dir}/styles.concat.css" encoding="UTF8">
+			<header filtering="no" trimleading="yes">
+				/*! ${project.name} - ${project.copyright} - Created: ${today} */
+			</header>
+			<filelist dir="${css.dir}" files="${css.files}"/>
+		</concat>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Minify concatinated CSS file-->
+	<target name="-css.minify" depends="-css.concatenate" description="Minifies CSS files">
+		<apply executable="java" parallel="false"  dest="${css.dir}">
+			<fileset dir="${css.dir}" includes="styles.concat.css"/>
+			<arg line="-jar"/>
+			<arg path="${tool.yui}"/>
+			<arg line="--charset ${project.encoding}"/>
+			<arg line="--preserve-semi"/>
+			<arg line="--line-break 10000"/>
+			<arg line="-v"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.concat.css" to="*.min.css"/>
+			<targetfile/>
+		</apply>
+		<delete file="${css.dir}/styles.concat.css"/>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Deploy CSS files-->
+	<target name="deploy.css" depends="-init,-css.minify" description="Deploy CSS files">
+		<echo>Finished.</echo>
+	</target>
+
+
+
+	<!--Concatenate JavaScript files-->
+	<target name="-js.concatenate" description="Concatenates specified JavaScript files">
+		<concat destfile="${js.dir}/scripts.concat.js" encoding="UTF8">
+			<header filtering="no" trimleading="yes">
+				/*! ${project.name} - ${project.copyright} - Created: ${today} */
+			</header>
+			<filelist dir="${js.dir}" files="${js.files}"/>
+		</concat>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Comment out console.log, alert lines-->
+	<target name="-js.remove.logs" depends="-js.concatenate" description="Comment out console.log, alert lines">
+		<replaceregexp match="(console.log\(.*\))" replace="/\*\1\*/" flags="g">
+			<fileset dir="${js.dir}">
+				<include name="scripts.concat.js"/>
+			</fileset>
+		</replaceregexp>
+		<replaceregexp match="(alert\(.*\))" replace="/\*\1\*/" flags="g" >
+			<fileset dir="${js.dir}">
+				<include name="scripts.concat.js"/>
+			</fileset>
+		</replaceregexp>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Minify concatinated JS file-->
+	<target name="-js.minify" depends="-js.remove.logs" description="Minifies JS files">
+		<apply executable="java" parallel="false" dest="${js.dir}">
+			<fileset dir="${js.dir}" includes="*.concat.js"/>
+			<arg line="-jar"/>
+			<arg path="${tool.yui}"/>
+			<arg line="--charset ${project.encoding}"/>
+			<arg line="--preserve-semi"/>
+			<arg line="--line-break 10000"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.concat.js" to="*.min.js"/>
+			<targetfile/>
+		</apply>
+		<delete file="${js.dir}/scripts.concat.js"/>
+		<echo>Finished</echo>
+	</target>
+
+	<!--Deploy JavaScript files-->
+	<target name="deploy.js" depends="-init,-js.minify" description="Deploy JavaScript files">
+		<echo>Finished.</echo>
+	</target>
+
+
+
+	<!--Move all JPG files-->
+	<target name="-img.jpg.move">
+		<copy todir="${img.deploy.dir}">
+			<fileset dir="${img.dir}">
+				<include name="*.jpg"/>
+			</fileset>
+		</copy>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Optimize all JPG files-->
+	<target name="-img.jpg.optimize" depends="-img.jpg.move">
+		<apply executable="jpegtran" dest="${img.deploy.dir}" parallel="false" verbose="true" resolveexecutable="true" force="true" vmlauncher="true">
+			<arg line="-copy none"/>
+			<arg value="-optimize"/>
+			<arg line="-outfile "/>
+			<targetfile/>
+			<srcfile/>
+			<fileset dir="${img.deploy.dir}" casesensitive="yes">
+				<include name="*.jpg"/>
+			</fileset>
+			<mapper type="identity"/>
+		</apply>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Move all PNG files-->
+	<target name="-img.png.move">
+		<copy todir="${img.deploy.dir}">
+			<fileset dir="${img.dir}">
+				<include name="*.png"/>
+			</fileset>
+		</copy>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Compress PNG files with optiPNG-->
+	<target name="-img.opti.png.optimize" depends="-img.png.move" description="Optimize PNG files with optiPNG">
+		<apply executable="optipng" osfamily="unix">
+			<arg value="-o7"/>
+			<fileset dir="${img.png.deploy.dir}">
+				<include name="*.png"/>
+			</fileset>
+		</apply>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Compress PNG files with pngtastic-->
+	<target name="-img.png.optimize" depends="-img.png.move" description="Optimize PNG files with pngtastic">
+		<taskdef classname="com.googlecode.pngtastic.ant.PngtasticTask" classpath="${tool.pngtastic}" name="pngtastic"/>
+		<pngtastic todir="${img.deploy.dir}">
+			<fileset dir="${img.deploy.dir}">
+				<include name="*.png"/>
+			</fileset>
+		</pngtastic>
+		<echo>Finished.</echo>
+	</target>
+
+	<!--Deploy image files-->
+	<target name="deploy.img" depends="-init,-img.png.optimize,-img.jpg.optimize" description="Deploy image files">
+		<echo>Finished.</echo>
+	</target>
+
+
+
+	<!--Deploy project-->
+	<target name="deploy" depends="-init,-css.minify,-js.minify,-img.png.optimize,-img.jpg.optimize" description="Deploy project">
+		<echo>${project.name}: deploy.css, deploy.js, deploy.img</echo>
+		<echo>Finished.</echo>
+	</target>
+
+
+</project>
