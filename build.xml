@@ -1,206 +1,371 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project name="build" default="deploy" basedir="..">
+<project name="A client-side ANT build script" default="deploy" basedir="../">
+
 
 
 	<!--Project description-->
 	<description>A client-side ANT build script</description>
 
 
+
 	<!--Get properties-->
+	<property file="${basedir}/build/config/default.properties"/>
 	<property file="${basedir}/build/config/project.properties"/>
+
+
+
+	<!--Import macrodefs-->
+	<import file="${build.dir}/macrodefs/macrodefs.xml"/>
+
+
+
+	<!--Import ANT-Contrib-->
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="${tool.antcontrib}"/>
+		</classpath>
+	</taskdef>
+
+
+
+	<!--Test for ANT version-->
+	<fail message="All features of the build script require Ant version 1.8.2 or greater. Please upgrade to the latest version or remove all instances of 'overwrite=no' (and this fail task) from the build script to continue.">
+		<condition>
+			<not>
+				<antversion atleast="1.8.2"/>
+			</not>
+		</condition>
+	</fail>
+
 
 
 	<!--Show all possible targets-->
 	<target name="help" description="Show all possible targets">
+		<buildnumber file="${build.dir}/build.num"/>
 		<echo>
-		${project.name}: available tasks
-		====================================
+		${project.name} v${project.version}b${build.number}
+		==============================================
+
+
+		available tasks
+		==============================================
 		default: deploy
 
-		target:  deploy	[deploy.css,deploy.js,deploy.img]
+		target:  deploy		[create a new distribution]
 
-		target:  deploy.css [-css.concatenate,-css.minify]
-		target:  deploy.js  [-js.concatenate,-js.remove.logs,-js.minify]
+		target:  deploy.css	[-css.concatenate,-css.minify]
+		target:  deploy.js	[-js.concatenate,-js.remove.logs,-js.minify]
 
-		target:  deploy.img [-init,-img.png.optimize,-img.jpg.optimize]
+		target:  deploy.png
+		target:  deploy.jpg
+
+		target:  archive	[backup project files]
+		target:  clean		[clean dev-dir]
+		target:  backup		[backup all files of dev-dir]
 
 		</echo>
 	</target>
 
 
 
-	<!--Initialize deploy-->
-	<target name="-init" description="Create build directory structure">
-		<!--Clean deploy directories-->
-		<delete dir="${img.deploy.dir}"/>
-		<mkdir dir="${img.deploy.dir}"/>
-		<!--Create the time stamp for the new build-->
+	<!--init: create timestamp-->
+	<target name="-init">
 		<tstamp>
-			<format property="today" pattern="EEE, d MMM yyyy HH:mm:ss Z"/>
+			<format property="TODAY" pattern="EEE, d MMM yyyy HH:mm:ss Z" locale="de,De"/>
+			<format property="NOW" pattern="yyyyMMdd-HHmmss" locale="de,De"/>
 		</tstamp>
-		<echo>Finished.</echo>
+		<echo message="Finished."/>
 	</target>
 
 
 
-	<!--Concatenate CSS files-->
-	<target name="-css.concatenate" description="Concatenates specified CSS files">
-		<concat destfile="${css.dir}/styles.concat.css" encoding="UTF8">
-			<header filtering="no" trimleading="yes">
-				/*! ${project.name} - ${project.copyright} - Created: ${today} */
-			</header>
-			<filelist dir="${css.dir}" files="${css.files}"/>
-		</concat>
-		<echo>Finished.</echo>
-	</target>
-
-	<!--Minify concatinated CSS file-->
-	<target name="-css.minify" depends="-css.concatenate" description="Minifies CSS files">
-		<apply executable="java" parallel="false"  dest="${css.dir}">
-			<fileset dir="${css.dir}" includes="styles.concat.css"/>
-			<arg line="-jar"/>
-			<arg path="${tool.yui}"/>
-			<arg line="--charset ${project.encoding}"/>
-			<arg line="--preserve-semi"/>
-			<arg line="--line-break 10000"/>
-			<arg line="-v"/>
-			<srcfile/>
-			<arg line="-o"/>
-			<mapper type="glob" from="*.concat.css" to="*.min.css"/>
-			<targetfile/>
-		</apply>
-		<delete file="${css.dir}/styles.concat.css"/>
-		<echo>Finished.</echo>
-	</target>
-
-	<!--Deploy CSS files-->
-	<target name="deploy.css" depends="-init,-css.minify" description="Deploy CSS files">
-		<echo>Finished.</echo>
+	<!--Remove old files and create new distribution directory-->
+	<target name="-clean">
+		<delete dir="${deploy.dir}" verbose="true"/>
+		<mkdir dir="${deploy.dir}"/>
+		<echo message="Finished."/>
 	</target>
 
 
 
-	<!--Concatenate JavaScript files-->
-	<target name="-js.concatenate" description="Concatenates specified JavaScript files">
-		<concat destfile="${js.dir}/scripts.concat.js" encoding="UTF8">
-			<header filtering="no" trimleading="yes">
-				/*! ${project.name} - ${project.copyright} - Created: ${today} */
-			</header>
-			<filelist dir="${js.dir}" files="${js.files}"/>
-		</concat>
-		<echo>Finished.</echo>
-	</target>
-
-	<!--Comment out console.log, alert lines-->
-	<target name="-js.remove.logs" depends="-js.concatenate" description="Comment out console.log, alert lines">
-		<replaceregexp match="(console.log\(.*\))" replace="/\*\1\*/" flags="g">
-			<fileset dir="${js.dir}">
-				<include name="scripts.concat.js"/>
-			</fileset>
-		</replaceregexp>
-		<replaceregexp match="(alert\(.*\))" replace="/\*\1\*/" flags="g" >
-			<fileset dir="${js.dir}">
-				<include name="scripts.concat.js"/>
-			</fileset>
-		</replaceregexp>
-		<echo>Finished.</echo>
-	</target>
-
-	<!--Minify concatinated JS file-->
-	<target name="-js.minify" depends="-js.remove.logs" description="Minifies JS files">
-		<apply executable="java" parallel="false" dest="${js.dir}">
-			<fileset dir="${js.dir}" includes="*.concat.js"/>
-			<arg line="-jar"/>
-			<arg path="${tool.yui}"/>
-			<arg line="--charset ${project.encoding}"/>
-			<arg line="--preserve-semi"/>
-			<arg line="--line-break 10000"/>
-			<srcfile/>
-			<arg line="-o"/>
-			<mapper type="glob" from="*.concat.js" to="*.min.js"/>
-			<targetfile/>
-		</apply>
-		<delete file="${js.dir}/scripts.concat.js"/>
-		<echo>Finished</echo>
-	</target>
-
-	<!--Deploy JavaScript files-->
-	<target name="deploy.js" depends="-init,-js.minify" description="Deploy JavaScript files">
-		<echo>Finished.</echo>
+	<!--Create gzipped version-->
+	<target name="-gzip">
+		<gzip destfile="${file}.gz" src="${file}">
+		</gzip>
 	</target>
 
 
 
-	<!--Move all JPG files-->
-	<target name="-img.jpg.move">
-		<copy todir="${img.deploy.dir}">
-			<fileset dir="${img.dir}">
-				<include name="*.jpg"/>
+	<!--Optimize CSS files-->
+	<target name="-css.concat">
+		<concat_files distbase="${basedir}" type="CSS" source="${deploy.dir}/${index.file.css}" target="${deploy.dir}/css"/>
+		<echo message="Finished."/>
+	</target>
+
+	<target name="-css.minify">
+		<minify_file type="CSS" source="${deploy.dir}/css" gzip="${gzip.css}"/>
+		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Optimize javascript files-->
+	<target name="-js.concat">
+		<concat_files distbase="${basedir}" type="JS" source="${deploy.dir}/${index.file.js}" target="${deploy.dir}/js"/>
+		<echo message="Finished."/>
+	</target>
+
+	<target name="-js.remove_logs">
+		<remove_logs dir="${deploy.dir}/js" file="scripts.min.js"/>
+		<echo message="Finished."/>
+	</target>
+
+	<target name="-js.minify">
+		<minify_file type="JS" source="${deploy.dir}/js" gzip="${gzip.js}"/>
+		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Copy project files to new distribution-->
+	<target name="-move_files">
+		<copy todir="${deploy.dir}" verbose="true">
+			<fileset dir="${basedir}">
+				<include name="**/*"/>
+				<excludesfile name="${build.dir}/excludes/excludes.file"/>
 			</fileset>
 		</copy>
-		<echo>Finished.</echo>
+		<echo message="Finished."/>
 	</target>
 
-	<!--Optimize all JPG files-->
-	<target name="-img.jpg.optimize" depends="-img.jpg.move">
-		<apply executable="jpegtran" dest="${img.deploy.dir}" parallel="false" verbose="true" resolveexecutable="true" force="true" vmlauncher="true">
-			<arg line="-copy none"/>
-			<arg value="-optimize"/>
-			<arg line="-outfile "/>
-			<targetfile/>
-			<srcfile/>
-			<fileset dir="${img.deploy.dir}" casesensitive="yes">
-				<include name="*.jpg"/>
+
+
+	<!--Optimize JPG and PNG files-->
+	<target name="-optimize_images">
+		<if>
+			<equals arg1="${optimize.images}" arg2="true"/>
+			<then>
+				<move_images source="${basedir}/assets/images" target="${deploy.dir}/assets/images"/>
+				<optimize_png target="${deploy.dir}/assets/images"/>
+				<optimize_jpg target="${deploy.dir}/assets/images"/>
+				<echo message="Finished."/>
+			</then>
+			<else>
+				<echo message="Skipped image optimization."/>
+			</else>
+		</if>
+	</target>
+
+
+
+	<!--Create gzipped versions-->
+	<target name="-gzip_fonts">
+		<if>
+			<equals arg1="${gzip.fonts}" arg2="true"/>
+			<then>
+				<gzip_files dir="${font.dir}" include="*.eot"/>
+				<gzip_files dir="${font.dir}" include="*.ttf"/>
+				<gzip_files dir="${font.dir}" include="*.svg"/>
+				<gzip_files dir="${font.dir}" include="*.woff"/>
+				<echo message="Finished."/>
+			</then>
+			<else>
+				<echo message="Skipped gzipping fonts."/>
+			</else>
+		</if>
+	</target>
+
+
+
+	<!--Optimize markup-->
+	<target name="-optimize_html">
+		<replace_css dir="${deploy.dir}" file="${index.file}"/>
+		<replace_js dir="${deploy.dir}" file="${index.file}"/>
+		<echo message="Included optimized CSS and JavaScript files."/>
+		<if>
+			<equals arg1="${optimize.html}" arg2="true"/>
+			<then>
+				<optimize_html target="${deploy.dir}"/>
+				<echo message="Finished."/>
+			</then>
+			<else>
+				<echo message="Skipped markup optimization."/>
+			</else>
+		</if>
+	</target>
+
+
+
+	<!--Update 'Last update' value in humans.txt-->
+	<target name="-update_humans_txt">
+		<if>
+			<available file="humans.txt" filepath="${deploy.dir}"/>
+			<then>
+				<replaceregexp match="LAST-UPDATE" replace="${TODAY}" flags="gs">
+					<fileset dir="${deploy.dir}/" includes="humans.txt"/>
+				</replaceregexp>
+				<echo message="Finished."/>
+			</then>
+			<else>
+				<echo message="Skipped, because humans.txt NOT found."/>
+			</else>
+		</if>
+	</target>
+
+
+
+	<!--Deploy project: create new distribution-->
+	<target name="deploy"
+			depends="-init,
+						-clean,
+						-move_files,
+						-css.concat,
+						-css.minify,
+						-js.concat,
+						-js.remove_logs,
+						-js.minify,
+						-optimize_images,
+						-gzip_fonts,
+						-optimize_html,
+						-update_humans_txt">
+
+		<buildnumber file="${build.dir}/build.num"/>
+		<echo message="${project.name} v${project.version}b${build.number} +++"/>
+		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Deploy CSS-->
+	<target name="deploy.css" depends="-init">
+		<!--Setup properties-->
+		<var name="base" value="${basedir}"/>
+		<var name="target" value="${base}/dist"/>
+		<var name="file" value="${index.file}"/>
+
+		<if>
+			<available file="${target}/css"/>
+			<then>
+				<delete verbose="true">
+					<fileset dir="${target}/css">
+						<include name="**/*"/>
+					</fileset>
+				</delete>
+			</then>
+			<else>
+				<mkdir dir="${target}/css"/>
+			</else>
+		</if>
+
+		<concat_files distbase="${base}" type="CSS" source="${base}/${file}" target="${target}/css"/>
+		<echo message="Concatinated CSS files."/>
+
+		<minify_file type="CSS" source="${target}/css" gzip="${gzip.css}"/>
+		<echo message="Minified CSS."/>
+
+		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Deploy JavaScript-->
+	<target name="deploy.js" depends="-init">
+		<!--Setup properties-->
+		<var name="base" value="${basedir}"/>
+		<var name="target" value="${base}/dist"/>
+		<var name="file" value="${index.file}"/>
+
+		<if>
+			<available file="${target}/js"/>
+			<then>
+				<delete verbose="true">
+					<fileset dir="${target}/js">
+						<include name="**/*"/>
+					</fileset>
+				</delete>
+			</then>
+			<else>
+				<mkdir dir="${target}/js"/>
+			</else>
+		</if>
+		<echo message="Cleaned JS dir."/>
+
+		<concat_files distbase="${base}" type="JS" source="${base}/${file}" target="${target}/js"/>
+		<echo message="Concatinated JavaSscript files."/>
+
+		<remove_logs dir="${target}/js" file="scripts.min.js"/>
+		<echo message="Removed logs."/>
+
+		<minify_file type="JS" source="${target}/js" gzip="${gzip.js}"/>
+		<echo message="Minified JS."/>
+
+		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Deploy PNG files-->
+	<target name="deploy.png">
+		<optimize_png target="${deploy.dir}/assets/images"/>
+		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Deploy JPG files-->
+	<target name="deploy.jpg">
+		<optimize_jpg target="${deploy.dir}/assets/images"/>
+		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Create archive and backup project files-->
+	<target name="archive" depends="-init">
+		<propertyregex property="project.version.underscore" input="${project.version}" regexp="\." replace="_" global="true"/>
+		<buildnumber file="${build.dir}/build.num"/>
+		<zip destfile="${basedir}/${NOW}_${project.short}_${project.version.underscore}b${build.number}.zip" comment="">
+			<zipfileset dir="${basedir}" prefix="/" encoding="${project.encoding}">
+				<include name="**/*"/>
+				<excludesfile name="${build.dir}/excludes/excludes_for_backup.file"/>
+			</zipfileset>
+		</zip>
+		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Clean development directory-->
+	<target name="clean">
+		<delete includeemptydirs="true" verbose="true">
+			<fileset dir="${basedir}">
+				<include name="**/.DS_Store"/>
+				<include name="**/doc/**"/>
+				<include name="**/log/**"/>
+				<include name="**/staging/**"/>
+				<include name="**/dist/**"/>
+				<include name="**/dev/**"/>
+				<include name="**/live/**"/>
 			</fileset>
-			<mapper type="identity"/>
-		</apply>
-		<echo>Finished.</echo>
-	</target>
-
-	<!--Move all PNG files-->
-	<target name="-img.png.move">
-		<copy todir="${img.deploy.dir}">
-			<fileset dir="${img.dir}">
-				<include name="*.png"/>
-			</fileset>
-		</copy>
-		<echo>Finished.</echo>
-	</target>
-
-	<!--Compress PNG files with optiPNG-->
-	<target name="-img.opti.png.optimize" depends="-img.png.move" description="Optimize PNG files with optiPNG">
-		<apply executable="optipng" osfamily="unix">
-			<arg value="-o7"/>
-			<fileset dir="${img.png.deploy.dir}">
-				<include name="*.png"/>
-			</fileset>
-		</apply>
-		<echo>Finished.</echo>
-	</target>
-
-	<!--Compress PNG files with pngtastic-->
-	<target name="-img.png.optimize" depends="-img.png.move" description="Optimize PNG files with pngtastic">
-		<taskdef classname="com.googlecode.pngtastic.ant.PngtasticTask" classpath="${tool.pngtastic}" name="pngtastic"/>
-		<pngtastic todir="${img.deploy.dir}">
-			<fileset dir="${img.deploy.dir}">
-				<include name="*.png"/>
-			</fileset>
-		</pngtastic>
-		<echo>Finished.</echo>
-	</target>
-
-	<!--Deploy image files-->
-	<target name="deploy.img" depends="-init,-img.png.optimize,-img.jpg.optimize" description="Deploy image files">
-		<echo>Finished.</echo>
+		</delete>
+		<echo message="Finished."/>
 	</target>
 
 
 
-	<!--Deploy project-->
-	<target name="deploy" depends="-init,-css.minify,-js.minify,-img.png.optimize,-img.jpg.optimize" description="Deploy project">
-		<echo>${project.name}: deploy.css, deploy.js, deploy.img</echo>
-		<echo>Finished.</echo>
+	<!--Create full backup of all files-->
+	<target name="backup" depends="-init">
+		<propertyregex property="project.version.underscore" input="${project.version}" regexp="\." replace="_" global="true"/>
+		<buildnumber file="${build.dir}/build.num"/>
+		<zip destfile="${basedir}/${NOW}_${project.short}_${project.version.underscore}b${build.number}_full_backup.zip" comment="">
+			<zipfileset dir="${basedir}" prefix="/" encoding="${project.encoding}">
+				<include name="**/*"/>
+				<exclude name="*.zip"/>
+			</zipfileset>
+		</zip>
+		<echo message="Finished."/>
 	</target>
+
 
 
 </project>

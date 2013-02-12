@@ -1,0 +1,340 @@
+<?xml version="1.0"?>
+<project name="Macrodefs for ANT Build Script">
+
+
+
+	<description>Macrodefs for ANT Build Script</description>
+
+
+
+	<!--Create or clean target directory and move image files-->
+	<macrodef name="move_images">
+		<attribute name="source"/>
+		<attribute name="target"/>
+		<sequential>
+			<if>
+				<available file="@{target}"/>
+				<then>
+					<delete includeemptydirs="true">
+						<fileset dir="@{target}">
+							<include name="**/*"/>
+							<exclude name="**/*.svn"/>
+							<exclude name="**/*.git"/>
+						</fileset>
+					</delete>
+				</then>
+				<else>
+					<mkdir dir="@{target}"/>
+				</else>
+			</if>
+			<copy todir="@{target}" verbose="true">
+				<fileset dir="@{source}">
+					<include name="**/*.jpg"/>
+					<include name="**/*.png"/>
+					<include name="**/*.gif"/>
+					<exclude name="_**/*"/>
+					<exclude name="_*.*"/>
+				</fileset>
+			</copy>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Optimize PNG files-->
+	<macrodef name="optimize_png">
+		<attribute name="target"/>
+		<sequential>
+			<if>
+				<and>
+					<os family="unix"/>
+					<available file="optipng" filepath="/usr/local/bin/"/>
+				</and>
+				<then>
+					<!-- <echo>OptiPNG in installed.</echo> -->
+					<if>
+						<available file="@{todir}"/>
+						<then>
+							<apply executable="optipng" osfamily="unix">
+								<arg value="-o7"/>
+								<fileset dir="@{target}">
+									<include name="**/*.png"/>
+								</fileset>
+							</apply>
+						</then>
+					</if>
+				</then>
+				<elseif>
+					<os family="unix"/>
+					<then>
+						<echo>OptiPNG is NOT installed. Tryin' to optimize mit PNGtastic.</echo>
+						<taskdef classname="com.googlecode.pngtastic.ant.PngtasticTask" classpath="${tool.pngtastic}" name="pngtastic"/>
+						<pngtastic todir="@{target}">
+							<fileset dir="@{target}">
+								<include name="**/*.png"/>
+							</fileset>
+						</pngtastic>
+					</then>
+				</elseif>
+				<elseif>
+					<os family="windows"/>
+					<then>
+						<echo>Skipped PNG optimization. There is currently no support for windows.</echo>
+					</then>
+				</elseif>
+			</if>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Optimize JPG files-->
+	<macrodef name="optimize_jpg">
+		<attribute name="target"/>
+		<sequential>
+			<if>
+				<and>
+					<os family="unix"/>
+					<available file="jpegtran" filepath="/usr/local/bin/"/>
+				</and>
+				<then>
+					<!-- <echo>jpegtran is installed!</echo> -->
+					<apply executable="jpegtran" dest="@{target}" parallel="false" verbose="true" resolveexecutable="true" force="true" vmlauncher="true">
+						<arg line="-copy none"/>
+						<arg value="-optimize"/>
+						<arg line="-outfile "/>
+						<targetfile/>
+						<srcfile/>
+						<fileset dir="@{target}" casesensitive="yes">
+							<include name="**/*.jpg"/>
+						</fileset>
+						<mapper type="identity"/>
+					</apply>
+				</then>
+				<elseif>
+					<os family="unix"/>
+					<then>
+						<echo>Skipped JPG optimization, because jpegtran is NOT installed!</echo>
+					</then>
+				</elseif>
+				<elseif>
+					<os family="windows"/>
+					<then>
+						<echo>Skipped JPG optimization. There is currently no support for windows.</echo>
+					</then>
+				</elseif>
+			</if>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Concatinate CSS or JavaSscript files from html and move to distribution folder-->
+	<macrodef name="concat_files">
+		<attribute name="distbase"/>
+		<attribute name="source"/>
+		<attribute name="type"/>
+		<attribute name="target"/>
+		<sequential>
+			<var name="file" value="file" unset="true"/>
+			<var name="set_header_info" value="true"/>
+			<var name="regex" value="link.*rel=&quot;stylesheet&quot;.*href=&quot;(.*?)&quot;"/>
+			<var name="concatfile" value="styles.min.css"/>
+			<if>
+				<equals arg1="@{type}" arg2="JS"/>
+				<then>
+					<var name="regex" value="script.*src=&quot;(.*?)&quot;"/>
+					<var name="concatfile" value="scripts.min.js"/>
+				</then>
+			</if>
+			<loadfile property="file" srcfile="@{source}"/>
+			<for param="line" list="${file}" delimiter="${line.separator}">
+				<sequential>
+					<propertyregex override="yes" property="data" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
+					<if>
+						<isset property="data"/>
+						<then>
+							<if>
+								<and>
+									<not>
+										<!--TODO: less-filter-->
+										<equals arg1="${data}" arg2=""/>
+									</not>
+									<not>
+										<contains string="${data}" substring="/less-"/>
+									</not>
+									<available file="@{distbase}/${data}"/>
+								</and>
+								<then>
+									<if>
+										<equals arg1="${set_header_info}" arg2="true"/>
+										<then>
+											<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
+												<header>
+													/*! ${project.name} v${project.version} - ${project.copyright} - Created: ${TODAY} */
+
+												</header>
+												<filelist dir="@{distbase}/" files="${data}">
+												</filelist>
+											</concat>
+											<var name="set_header_info" value="false"/>
+										</then>
+										<else>
+											<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
+												<header>
+
+												</header>
+												<filelist dir="@{distbase}/" files="${data}">
+												</filelist>
+											</concat>
+										</else>
+									</if>
+								</then>
+							</if>
+						</then>
+					</if>
+				</sequential>
+			</for>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Comment out console.log, alert lines-->
+	<macrodef name="remove_logs">
+		<attribute name="dir"/>
+		<attribute name="file"/>
+		<sequential>
+			<replaceregexp match="(console.log\(.*\))" replace="/\*\1\*/" flags="g">
+				<fileset dir="@{dir}">
+					<include name="@{file}"/>
+				</fileset>
+			</replaceregexp>
+			<replaceregexp match="(alert\(.*\))" replace="/\*\1\*/" flags="g" >
+				<fileset dir="@{dir}">
+					<include name="@{file}"/>
+				</fileset>
+			</replaceregexp>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Minify concatinated CSS or JavaSscript file-->
+	<macrodef name="minify_file">
+		<attribute name="type"/>
+		<attribute name="source"/>
+		<attribute name="gzip"/>
+		<sequential>
+			<var name="min" value="styles.min.css"/>
+			<if>
+				<equals arg1="@{type}" arg2="JS"/>
+				<then>
+					<var name="min" value="scripts.min.js"/>
+				</then>
+			</if>
+			<apply executable="java" parallel="false" force="true" dest="@{source}">
+				<fileset dir="@{source}" includes="${min}"/>
+				<arg line="-jar"/>
+				<arg path="${tool.yui}"/>
+				<arg line="--charset ${project.encoding}"/>
+				<arg line="--preserve-semi"/>
+				<arg line="--line-break 10000000"/>
+				<srcfile/>
+				<arg line="-o"/>
+				<mapper type="identity"/>
+				<targetfile/>
+			</apply>
+			<if>
+				<equals arg1="@{gzip}" arg2="true"/>
+				<then>
+					<gzip destfile="@{source}/${min}.gz" src="@{source}/${min}">
+					</gzip>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Replace styles with optimized styles -->
+	<macrodef name="replace_css">
+		<attribute name="dir"/>
+		<attribute name="file"/>
+		<sequential>
+			<replaceregexp match="\&lt;!--source styles--\&gt;(.*?)\&lt;!--end source styles--\&gt;" replace="\&lt;link rel=&quot;stylesheet&quot; href=&quot;css/styles.min.css&quot;\&gt;" flags="gs">
+				<fileset dir="@{dir}/" includes="@{file}"/>
+			</replaceregexp>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Replace scripts with optimized scripts-->
+	<macrodef name="replace_js">
+		<attribute name="dir"/>
+		<attribute name="file"/>
+		<sequential>
+			<replaceregexp match="\&lt;!--source scripts--\&gt;(.*?)\&lt;!--end source scripts--\&gt;" replace="\&lt;script src=&quot;js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs">
+				<fileset dir="@{dir}/" includes="@{file}"/>
+			</replaceregexp>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Optimize HTML-->
+	<macrodef name="optimize_html">
+		<attribute name="target"/>
+		<sequential>
+			<apply executable="java" parallel="false" force="true" dest="@{target}">
+				<fileset dir="@{target}" includes="*.html, *.php"/>
+				<arg value="-jar"/>
+				<arg path="${tool.htmlcomp}"/>
+				<arg line="--remove-quotes"/>
+				<arg line="--compress-js"/>
+				<arg line="--compress-css"/>
+				<arg line="--preserve-php"/>
+				<arg line="--preserve-ssi"/>
+				<srcfile/>
+				<arg value="-o"/>
+				<mapper type="identity"/>
+				<targetfile/>
+			</apply>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Remove .gz-files-->
+	<macrodef name="clean_dir_from_gzip">
+		<attribute name="dir"/>
+		<sequential>
+			<delete>
+				<fileset dir="@{dir}" casesensitive="yes">
+					<include name="*.gz"/>
+				</fileset>
+			</delete>
+		</sequential>
+	</macrodef>
+
+
+
+	<!--Gzip files-->
+	<macrodef name="gzip_files">
+		<attribute name="dir"/>
+		<attribute name="include"/>
+		<sequential>
+			<foreach target="-gzip" param="file">
+				<path>
+					<fileset dir="@{dir}" casesensitive="yes">
+						<include name="@{include}"/>
+					</fileset>
+				</path>
+			</foreach>
+		</sequential>
+	</macrodef>
+
+
+
+</project>
