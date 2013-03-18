@@ -32,6 +32,12 @@ ruby -e "$(curl -fsSkL raw.github.com/mxcl/homebrew/go)"
 brew install libjpeg
 ```
 
+- Instead of PNGtastic you can also use [OptiPNG](http://optipng.sourceforge.net/)
+
+```
+brew install optipng
+```
+
 
 ## Setup: Windows
 
