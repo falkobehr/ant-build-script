@@ -53,7 +53,7 @@
 				<then>
 					<!-- <echo>OptiPNG in installed.</echo> -->
 					<if>
-						<available file="@{todir}"/>
+						<available file="@{target}"/>
 						<then>
 							<apply executable="optipng" osfamily="unix">
 								<arg value="-o7"/>
