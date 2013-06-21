@@ -116,7 +116,7 @@
 	</target>
 
 	<target name="-js.remove_logs">
-		<remove_logs dir="${deploy.dir}/js" file="scripts.min.js"/>
+		<remove_logs dir="${deploy.dir}/js" file="scripts.min.js" logs="${remove.logs}" alerts="${remove.alerts}"/>
 		<echo message="Finished."/>
 	</target>
 

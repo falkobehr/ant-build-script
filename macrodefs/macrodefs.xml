@@ -204,17 +204,37 @@
 	<macrodef name="remove_logs">
 		<attribute name="dir"/>
 		<attribute name="file"/>
+		<attribute name="logs"/>
+		<attribute name="alerts"/>
 		<sequential>
-			<replaceregexp match="(console.log\(.*\))" replace="/\*\1\*/" flags="g">
-				<fileset dir="@{dir}">
-					<include name="@{file}"/>
-				</fileset>
-			</replaceregexp>
-			<replaceregexp match="(alert\(.*\))" replace="/\*\1\*/" flags="g" >
-				<fileset dir="@{dir}">
-					<include name="@{file}"/>
-				</fileset>
-			</replaceregexp>
+			<if>
+				<equals arg1="@{logs}" arg2="true"/>
+				<then>
+					<replaceregexp match="(console.log\(.*\))" replace="/\*\1\*/" flags="g">
+						<fileset dir="@{dir}">
+							<include name="@{file}"/>
+						</fileset>
+					</replaceregexp>
+					<echo message="Removed JS logs."/>
+				</then>
+				<else>
+					<echo message="Skipped JS logs."/>
+				</else>
+			</if>
+			<if>
+				<equals arg1="@{alerts}" arg2="true"/>
+				<then>
+					<replaceregexp match="(alert\(.*\))" replace="/\*\1\*/" flags="g" >
+						<fileset dir="@{dir}">
+							<include name="@{file}"/>
+						</fileset>
+					</replaceregexp>
+					<echo message="Removed JS alerts."/>
+				</then>
+				<else>
+					<echo message="Skipped JS alerts."/>
+				</else>
+			</if>
 		</sequential>
 	</macrodef>
 
