@@ -142,12 +142,12 @@
 
 	<!--Optimize JPG and PNG files-->
 	<target name="-optimize_images">
+		<move_images source="${images.dir}" target="${images.deploy.dir}"/>
 		<if>
 			<equals arg1="${optimize.images}" arg2="true"/>
 			<then>
-				<move_images source="${basedir}/assets/images" target="${deploy.dir}/assets/images"/>
-				<optimize_png target="${deploy.dir}/assets/images"/>
-				<optimize_jpg target="${deploy.dir}/assets/images"/>
+				<optimize_png target="${images.deploy.dir}"/>
+				<optimize_jpg target="${images.deploy.dir}"/>
 				<echo message="Finished."/>
 			</then>
 			<else>
