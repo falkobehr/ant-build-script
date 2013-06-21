@@ -11,13 +11,9 @@
 **/.jshintrc
 **/.settings/**
 
-**/.zip/**
+*.md*
+_*.*
 
 build/**
 doc/**
 log/**
-
-staging/**
-dist/**
-dev/**
-live/**

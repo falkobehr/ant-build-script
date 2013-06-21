@@ -40,6 +40,69 @@
 	</macrodef>
 
 
+	<!--Create or clean target directory and move image files-->
+	<macrodef name="move_files">
+		<attribute name="source"/>
+		<attribute name="target"/>
+		<attribute name="type"/>
+		<sequential>
+			<if>
+				<available file="@{target}"/>
+				<then>
+					<delete includeemptydirs="true">
+						<fileset dir="@{target}">
+							<include name="**/*"/>
+							<exclude name="**/*.svn"/>
+							<exclude name="**/*.git"/>
+						</fileset>
+					</delete>
+				</then>
+				<else>
+					<mkdir dir="@{target}"/>
+				</else>
+			</if>
+			<if>
+				<equals arg1="@{type}" arg2="images"/>
+				<then>
+					<copy todir="@{target}" verbose="true">
+						<fileset dir="@{source}">
+							<include name="**/*.jpg"/>
+							<include name="**/*.png"/>
+							<include name="**/*.gif"/>
+							<exclude name="_**/*"/>
+							<exclude name="_*.*"/>
+						</fileset>
+					</copy>
+				</then>
+			</if>
+			<if>
+				<equals arg1="@{type}" arg2="CSS"/>
+				<then>
+					<copy todir="@{target}" verbose="true">
+						<fileset dir="@{source}">
+							<include name="**/*.css"/>
+							<exclude name="_**/*"/>
+							<exclude name="_*.*"/>
+						</fileset>
+					</copy>
+				</then>
+			</if>
+			<if>
+				<equals arg1="@{type}" arg2="JS"/>
+				<then>
+					<copy todir="@{target}" verbose="true">
+						<fileset dir="@{source}">
+							<include name="**/*.js"/>
+							<exclude name="_**/*"/>
+							<exclude name="_*.*"/>
+						</fileset>
+					</copy>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+
+
 
 	<!--Optimize PNG files-->
 	<macrodef name="optimize_png">

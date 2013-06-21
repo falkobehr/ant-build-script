@@ -11,20 +11,8 @@
 **/.jshintrc
 **/.settings/**
 
-*.md*
-_*.*
+**/.zip
 
 build/**
 doc/**
 log/**
-
-css/**
-less/**
-js/**
-images/**
-assets/images/**
-
-staging/**
-dist/**
-dev/**
-live/**

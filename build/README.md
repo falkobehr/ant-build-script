@@ -1,4 +1,9 @@
-# A client-side ANT build script
+# A client-side ANT build script 3.0
+
+
+## Example
+
+I included an example project where you can see how to define sections for CSS and javaScript includes
 
 
 ## What it does
@@ -49,8 +54,10 @@ brew install optipng
 Open terminal app or command line and go to:
 
 ```
-cd ~/Sites/your-site/build/
+cd /path/to/your/project/build/
 ```
+
+
 
 ### Build targets
 
@@ -59,6 +66,8 @@ ant deploy  		# Create a new distribution with optimized CSS, JavaScript, HTML a
 
 ant deploy.css		# Combine and minify CSS files
 ant deploy.js		# Combine, clean and minify JavaSscript files
+
+ant deploy.img		# Optimize PNGs and JPGs
 ant deploy.png		# Optimize PNGs
 ant deploy.jpg		# Optimize JPGs
 
@@ -66,7 +75,7 @@ ant archive			# Creates a backup of your development directory w/o svn, git, dep
 ant backup			# Creates a full backup of your development directory
 ant clean			# Remove all logs, docs, deployed versions
 
-ant help			# Show all possible targets
+ant help				# Show all possible targets
 ```
 
 
