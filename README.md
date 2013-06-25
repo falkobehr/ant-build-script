@@ -3,7 +3,7 @@
 
 ## Example
 
-I included an example project where you can see how to define sections for CSS and javaScript includes
+I included an example project where you can see how to define sections for CSS and JavaScript includes
 
 
 ## What it does
@@ -11,6 +11,7 @@ I included an example project where you can see how to define sections for CSS a
 - Creates a new distribution with all needed files and optimized CSS, JavaScript, HTML and images
 - Combines and minifies CSS files
 - Combines, cleans and minifies JavaScript files
+- Validates JavaScript files
 - Optimizes JPGs and PNGs (Unix only)
 
 
@@ -65,7 +66,9 @@ cd /path/to/your/project/build/
 ant deploy  		# Create a new distribution with optimized CSS, JavaScript, HTML and images
 
 ant deploy.css		# Combine and minify CSS files
-ant deploy.js		# Combine, clean and minify JavaSscript files
+ant deploy.js		# Combine, clean and minify JavaScript files
+
+ant validate.js	# Validate all included JavaScript files
 
 ant deploy.img		# Optimize PNGs and JPGs
 ant deploy.png		# Optimize PNGs

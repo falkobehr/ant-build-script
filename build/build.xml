@@ -56,6 +56,8 @@
 		target:  deploy.css	[-css.concatenate,-css.minify]
 		target:  deploy.js	[-js.concatenate,-js.remove.logs,-js.minify]
 
+		target:  validate.js	[validate included JS files]
+
 		target:  deploy.img	[-deploy.png,-deploy.jpg]
 		target:  deploy.png
 		target:  deploy.jpg
@@ -109,6 +111,24 @@
 			<else>
 				<move_files source="${css.dir}" target="${deploy.css.dir}" type="CSS"/>
 				<echo message="Skipped CSS optimization."/>
+			</else>
+		</if>
+	</target>
+
+
+
+	<!--Optimize javascript files-->
+	<target name="-validate_js">
+		<if>
+			<equals arg1="${validate.js}" arg2="true"/>
+			<then>
+				<delete dir="${log.dir}"/>
+				<mkdir dir="${log.dir}"/>
+				<validate_js source="${index.file.js}" target="${log.dir}" showlog="${show.log}"/>
+				<echo message="Finished."/>
+			</then>
+			<else>
+				<echo message="Skipped JS validation."/>
 			</else>
 		</if>
 	</target>
@@ -239,6 +259,7 @@
 						-clean,
 						-move_files,
 						-optimize_css,
+						-validate_js,
 						-optimize_js,
 						-optimize_images,
 						-gzip_fonts,
@@ -306,6 +327,16 @@
 
 		<buildnumber file="${build.dir}/build.num"/>
 		<echo message="Finished."/>
+	</target>
+
+
+
+	<!--Validate JS files-->
+	<target name="validate.js">
+		<delete dir="${log.dir}"/>
+		<mkdir dir="${log.dir}"/>
+		<validate_js source="${index.file.js}" target="${log.dir}" showlog="${show.log}"/>
+		<echo>Finished.</echo>
 	</target>
 
 

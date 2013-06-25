@@ -420,4 +420,64 @@
 
 
 
+	<!--Validate JS files with JSLint-->
+	<macrodef name="validate_js">
+		<attribute name="source"/>
+		<attribute name="target"/>
+		<attribute name="showlog"/>
+		<sequential>
+			<taskdef name="jslint" classname="com.googlecode.jslint4java.ant.JSLintTask" classpath="${tool.jslint}"/>
+			<loadfile property="file" srcfile="@{source}"/>
+			<for param="line" list="${file}" delimiter="${line.separator}">
+				<sequential>
+					<propertyregex override="yes" property="data" input="@{line}" regexp="script.*src=&quot;(.*?)&quot;" select="\1" casesensitive="true" defaultvalue=""/>
+					<if>
+						<and>
+							<isset property="data"/>
+							<not><equals arg1="${data}" arg2=""/></not>
+							<not><contains string="${data}" substring="/less-"/></not>
+							<not><contains string="${data}" substring="/libs/"/></not>
+							<available file="${basedir}/${data}"/>
+						</and>
+						<then>
+							<propertyregex override="yes" property="filename" input="${data}" regexp="js/(.*?)\.js" select="\1" casesensitive="true" defaultvalue=""/>
+							<if>
+								<and>
+									<isset property="@{showlog}"/>
+									<equals arg1="@{showlog}" arg2="true"/>
+								</and>
+								<then>
+									<jslint options="${jslint.options}" haltOnFailure="false" encoding="${project.encoding}">
+										<predef>${jslint.predefined}</predef>
+										<formatter type="plain"/>
+										<formatter type="plain" destfile="@{target}/${filename}.txt"/>
+										<fileset dir="${basedir}/">
+											<include name="${data}"/>
+										</fileset>
+									</jslint>
+								</then>
+								<else>
+									<jslint options="${jslint.options}" haltOnFailure="false" encoding="${project.encoding}">
+										<predef>${jslint.predefined}</predef>
+										<formatter type="plain" destfile="@{target}/${filename}.txt"/>
+										<fileset dir="${basedir}/">
+											<include name="${data}"/>
+										</fileset>
+									</jslint>
+								</else>
+							</if>
+						</then>
+					</if>
+				</sequential>
+			</for>
+			<delete>
+				<fileset dir="@{target}">
+					<size value="0" when="equal"/>
+				</fileset>
+			</delete>
+		</sequential>
+	</macrodef>
+
+
+
 </project>
