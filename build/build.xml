@@ -104,7 +104,7 @@
 		<if>
 			<equals arg1="${optimize.css}" arg2="true"/>
 			<then>
-				<concat_files distbase="${basedir}" type="CSS" source="${deploy.dir}/${index.file.css}" target="${deploy.css.dir}"/>
+				<concat_files distbase="${basedir}" type="CSS" source="${deploy.dir}/${file.css}" target="${deploy.css.dir}"/>
 				<minify_file type="CSS" source="${deploy.css.dir}" gzip="${gzip.css}"/>
 				<echo message="Finished."/>
 			</then>
@@ -124,7 +124,7 @@
 			<then>
 				<delete dir="${log.dir}"/>
 				<mkdir dir="${log.dir}"/>
-				<validate_js source="${index.file.js}" target="${log.dir}" showlog="${show.log}"/>
+				<validate_js source="${file.js}" target="${log.dir}" showlog="${show.log}"/>
 				<echo message="Finished."/>
 			</then>
 			<else>
@@ -140,7 +140,7 @@
 		<if>
 			<equals arg1="${optimize.js}" arg2="true"/>
 			<then>
-				<concat_files distbase="${basedir}" type="JS" source="${deploy.dir}/${index.file.js}" target="${deploy.js.dir}"/>
+				<concat_files distbase="${basedir}" type="JS" source="${deploy.dir}/${file.js}" target="${deploy.js.dir}"/>
 				<remove_logs dir="${deploy.js.dir}" file="scripts.min.js" logs="${remove.logs}" alerts="${remove.alerts}"/>
 				<minify_file type="JS" source="${deploy.js.dir}" gzip="${gzip.js}"/>
 				<echo message="Finished."/>
@@ -209,14 +209,14 @@
 		<if>
 			<equals arg1="${include.opt.css}" arg2="true"/>
 			<then>
-				<replace_css dir="${deploy.dir}" file="${index.file.css}"/>
+				<replace_css dir="${deploy.dir}" file="${file.css}"/>
 				<echo message="Included optimized CSS file."/>
 			</then>
 		</if>
 		<if>
 			<equals arg1="${include.opt.js}" arg2="true"/>
 			<then>
-				<replace_js dir="${deploy.dir}" file="${index.file.js}"/>
+				<replace_js dir="${deploy.dir}" file="${file.js}"/>
 				<echo message="Included optimized JS file."/>
 			</then>
 		</if>
@@ -289,7 +289,7 @@
 			</else>
 		</if>
 
-		<concat_files distbase="${basedir}" type="CSS" source="${basedir}/${index.file.css}" target="${deploy.css.dir}"/>
+		<concat_files distbase="${basedir}" type="CSS" source="${basedir}/${file.css}" target="${deploy.css.dir}"/>
 		<echo message="Concatinated CSS files."/>
 
 		<minify_file type="CSS" source="${deploy.css.dir}" gzip="${gzip.css}"/>
@@ -317,7 +317,7 @@
 			</else>
 		</if>
 
-		<concat_files distbase="${basedir}" type="JS" source="${basedir}/${index.file.js}" target="${deploy.js.dir}"/>
+		<concat_files distbase="${basedir}" type="JS" source="${basedir}/${file.js}" target="${deploy.js.dir}"/>
 		<echo message="Concatinated CSS files."/>
 
 		<remove_logs dir="${deploy.js.dir}" file="scripts.min.js" logs="${remove.logs}" alerts="${remove.alerts}"/>
@@ -335,7 +335,7 @@
 	<target name="validate.js">
 		<delete dir="${log.dir}"/>
 		<mkdir dir="${log.dir}"/>
-		<validate_js source="${index.file.js}" target="${log.dir}" showlog="${show.log}"/>
+		<validate_js source="${file.js}" target="${log.dir}" showlog="${show.log}"/>
 		<echo>Finished.</echo>
 	</target>
 

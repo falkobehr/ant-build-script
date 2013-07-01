@@ -130,7 +130,7 @@
 				<elseif>
 					<os family="unix"/>
 					<then>
-						<echo>OptiPNG is NOT installed. Tryin' to optimize mit PNGtastic.</echo>
+						<echo message="OptiPNG is NOT installed. Tryin' to optimize mit PNGtastic"/>
 						<taskdef classname="com.googlecode.pngtastic.ant.PngtasticTask" classpath="${tool.pngtastic}" name="pngtastic"/>
 						<pngtastic todir="@{target}">
 							<fileset dir="@{target}">
@@ -142,7 +142,7 @@
 				<elseif>
 					<os family="windows"/>
 					<then>
-						<echo>Skipped PNG optimization. There is currently no support for windows.</echo>
+						<echo message="Skipped PNG optimization. There is currently no support for windows."/>
 					</then>
 				</elseif>
 			</if>
@@ -177,13 +177,13 @@
 				<elseif>
 					<os family="unix"/>
 					<then>
-						<echo>Skipped JPG optimization, because jpegtran is NOT installed!</echo>
+						<echo message="Skipped JPG optimization, because jpegtran is NOT installed!"/>
 					</then>
 				</elseif>
 				<elseif>
 					<os family="windows"/>
 					<then>
-						<echo>Skipped JPG optimization. There is currently no support for windows.</echo>
+						<echo message="Skipped JPG optimization. There is currently no support for windows."/>
 					</then>
 				</elseif>
 			</if>
@@ -220,7 +220,6 @@
 							<if>
 								<and>
 									<not>
-										<!--TODO: less-filter-->
 										<equals arg1="${data}" arg2=""/>
 									</not>
 									<not>
@@ -371,7 +370,7 @@
 		<attribute name="target"/>
 		<sequential>
 			<apply executable="java" parallel="false" force="true" dest="@{target}">
-				<fileset dir="@{target}" includes="*.html, *.php"/>
+				<fileset dir="@{target}" includes="**/*.html, **/*.htm, **/*.php"/>
 				<arg value="-jar"/>
 				<arg path="${tool.htmlcomp}"/>
 				<arg line="--remove-quotes"/>
