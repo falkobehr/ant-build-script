@@ -201,6 +201,9 @@
 		<sequential>
 			<var name="file" value="file" unset="true"/>
 			<var name="set_header_info" value="true"/>
+			<var name="do_concat" value="false"/>
+			<var name="regex_to_start" value="--source styles--"/>
+			<var name="regex_to_stop" value="--end source styles--"/>
 			<var name="regex" value="link.*rel=&quot;stylesheet&quot;.*href=&quot;(.*?)&quot;"/>
 			<var name="concatfile" value="styles.min.css"/>
 			<if>
@@ -208,48 +211,79 @@
 				<then>
 					<var name="regex" value="script.*src=&quot;(.*?)&quot;"/>
 					<var name="concatfile" value="scripts.min.js"/>
+					<var name="regex_to_start" value="--source scripts--"/>
+					<var name="regex_to_stop" value="--end source scripts--"/>
 				</then>
 			</if>
 			<loadfile property="file" srcfile="@{source}"/>
 			<for param="line" list="${file}" delimiter="${line.separator}">
 				<sequential>
-					<propertyregex override="yes" property="data" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
+					<propertyregex override="yes" property="found_start" input="@{line}" regexp="${regex_to_start}" select="\1" casesensitive="true" defaultvalue=""/>
+					<propertyregex override="yes" property="found_stop" input="@{line}" regexp="${regex_to_stop}" select="\1" casesensitive="true" defaultvalue=""/>
 					<if>
-						<isset property="data"/>
+						<and>
+							<isset property="found_start"/>
+							<not>
+								<equals arg1="${found_start}" arg2=""/>
+							</not>
+						</and>
 						<then>
+							<var name="do_concat" value="true"/>
+						</then>
+					</if>
+					<if>
+						<and>
+							<isset property="found_stop"/>
+							<not>
+								<equals arg1="${found_stop}" arg2=""/>
+							</not>
+						</and>
+						<then>
+							<var name="do_concat" value="false"/>
+						</then>
+					</if>
+					<if>
+						<equals arg1="${do_concat}" arg2="true"/>
+						<then>
+							<propertyregex override="yes" property="data" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
 							<if>
-								<and>
-									<not>
-										<equals arg1="${data}" arg2=""/>
-									</not>
-									<not>
-										<contains string="${data}" substring="/less-"/>
-									</not>
-									<available file="@{distbase}/${data}"/>
-								</and>
+								<isset property="data"/>
 								<then>
 									<if>
-										<equals arg1="${set_header_info}" arg2="true"/>
+										<and>
+											<not>
+												<equals arg1="${data}" arg2=""/>
+											</not>
+											<not>
+												<contains string="${data}" substring="/less-"/>
+											</not>
+											<available file="@{distbase}/${data}"/>
+										</and>
 										<then>
-											<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
-												<header>
-													/*! ${project.name} v${project.version} - ${project.copyright} - Created: ${TODAY} */
+											<if>
+												<equals arg1="${set_header_info}" arg2="true"/>
+												<then>
+													<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
+														<header>
+															/*! ${project.name} v${project.version} - ${project.copyright} - Created: ${TODAY} */
 
-												</header>
-												<filelist dir="@{distbase}/" files="${data}">
-												</filelist>
-											</concat>
-											<var name="set_header_info" value="false"/>
+														</header>
+														<filelist dir="@{distbase}/" files="${data}">
+														</filelist>
+													</concat>
+													<var name="set_header_info" value="false"/>
+												</then>
+												<else>
+													<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
+														<header>
+
+														</header>
+														<filelist dir="@{distbase}/" files="${data}">
+														</filelist>
+													</concat>
+												</else>
+											</if>
 										</then>
-										<else>
-											<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
-												<header>
-
-												</header>
-												<filelist dir="@{distbase}/" files="${data}">
-												</filelist>
-											</concat>
-										</else>
 									</if>
 								</then>
 							</if>
