@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project name="Macrodefs for ANT Build Script">
 
 
@@ -38,6 +38,7 @@
 			</copy>
 		</sequential>
 	</macrodef>
+
 
 
 	<!--Create or clean target directory and move image files-->
@@ -114,7 +115,6 @@
 					<available file="optipng" filepath="/usr/local/bin/"/>
 				</and>
 				<then>
-					<!-- <echo>OptiPNG in installed.</echo> -->
 					<if>
 						<available file="@{target}"/>
 						<then>
@@ -161,7 +161,6 @@
 					<available file="jpegtran" filepath="/usr/local/bin/"/>
 				</and>
 				<then>
-					<!-- <echo>jpegtran is installed!</echo> -->
 					<apply executable="jpegtran" dest="@{target}" parallel="false" verbose="true" resolveexecutable="true" force="true" vmlauncher="true">
 						<arg line="-copy none"/>
 						<arg value="-optimize"/>
@@ -202,17 +201,17 @@
 			<var name="file" value="file" unset="true"/>
 			<var name="set_header_info" value="true"/>
 			<var name="do_concat" value="false"/>
-			<var name="regex_to_start" value="--source styles--"/>
-			<var name="regex_to_stop" value="--end source styles--"/>
-			<var name="regex" value="link.*rel=&quot;stylesheet&quot;.*href=&quot;(.*?)&quot;"/>
+			<var name="regex_to_start" value="-- START styles --"/>
+			<var name="regex_to_stop" value="-- END styles --"/>
+			<var name="regex" value="&lt;link.*rel=&quot;stylesheet&quot;.*href=&quot;(.*?)&quot;"/>
 			<var name="concatfile" value="styles.min.css"/>
 			<if>
 				<equals arg1="@{type}" arg2="JS"/>
 				<then>
 					<var name="regex" value="script.*src=&quot;(.*?)&quot;"/>
 					<var name="concatfile" value="scripts.min.js"/>
-					<var name="regex_to_start" value="--source scripts--"/>
-					<var name="regex_to_stop" value="--end source scripts--"/>
+					<var name="regex_to_start" value="-- START scripts --"/>
+					<var name="regex_to_stop" value="-- END scripts --"/>
 				</then>
 			</if>
 			<loadfile property="file" srcfile="@{source}"/>
@@ -223,9 +222,7 @@
 					<if>
 						<and>
 							<isset property="found_start"/>
-							<not>
-								<equals arg1="${found_start}" arg2=""/>
-							</not>
+							<not><equals arg1="${found_start}" arg2=""/></not>
 						</and>
 						<then>
 							<var name="do_concat" value="true"/>
@@ -234,32 +231,46 @@
 					<if>
 						<and>
 							<isset property="found_stop"/>
-							<not>
-								<equals arg1="${found_stop}" arg2=""/>
-							</not>
+							<not><equals arg1="${found_stop}" arg2=""/></not>
 						</and>
 						<then>
 							<var name="do_concat" value="false"/>
 						</then>
 					</if>
 					<if>
-						<equals arg1="${do_concat}" arg2="true"/>
+						<and>
+							<equals arg1="${do_concat}" arg2="true"/>
+							<not><contains string="@{line}" substring="!--"/></not>
+						</and>
 						<then>
+
+							
+
+<!--
 							<propertyregex override="yes" property="data" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
 							<if>
-								<isset property="data"/>
+								<and>
+									<isset property="data"/>
+									<equals arg1="${data}" arg2=""/>
+								</and>
 								<then>
+-->
+
+
+									<propertyregex override="yes" property="data" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
 									<if>
 										<and>
-											<not>
-												<equals arg1="${data}" arg2=""/>
-											</not>
-											<not>
-												<contains string="${data}" substring="/less-"/>
-											</not>
+											<isset property="data"/>
+											<not><equals arg1="${data}" arg2=""/></not>
 											<available file="@{distbase}/${data}"/>
 										</and>
 										<then>
+											<if>
+												<equals arg1="${log_optimization}" arg2="true"/>
+												<then>
+													<echo>Added file: ${data}</echo>
+												</then>
+											</if>
 											<if>
 												<equals arg1="${set_header_info}" arg2="true"/>
 												<then>
@@ -285,8 +296,17 @@
 											</if>
 										</then>
 									</if>
+									
+									
+									
+									
+<!--
 								</then>
 							</if>
+-->
+							
+							
+							
 						</then>
 					</if>
 				</sequential>
@@ -378,7 +398,7 @@
 		<attribute name="dir"/>
 		<attribute name="file"/>
 		<sequential>
-			<replaceregexp match="\&lt;!--source styles--\&gt;(.*?)\&lt;!--end source styles--\&gt;" replace="\&lt;link rel=&quot;stylesheet&quot; href=&quot;css/styles.min.css&quot;\&gt;" flags="gs">
+			<replaceregexp match="\&lt;!-- START styles --\&gt;(.*?)\&lt;!-- END styles--\&gt;" replace="\&lt;link rel=&quot;stylesheet&quot; href=&quot;css/styles.min.css&quot;\&gt;" flags="gs">
 				<fileset dir="@{dir}/" includes="@{file}"/>
 			</replaceregexp>
 		</sequential>
@@ -391,7 +411,7 @@
 		<attribute name="dir"/>
 		<attribute name="file"/>
 		<sequential>
-			<replaceregexp match="\&lt;!--source scripts--\&gt;(.*?)\&lt;!--end source scripts--\&gt;" replace="\&lt;script src=&quot;js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs">
+			<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script src=&quot;js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs">
 				<fileset dir="@{dir}/" includes="@{file}"/>
 			</replaceregexp>
 		</sequential>
@@ -459,45 +479,82 @@
 		<attribute name="target"/>
 		<attribute name="showlog"/>
 		<sequential>
+			<var name="do_validation" value="false"/>
 			<taskdef name="jslint" classname="com.googlecode.jslint4java.ant.JSLintTask" classpath="${tool.jslint}"/>
 			<loadfile property="file" srcfile="@{source}"/>
 			<for param="line" list="${file}" delimiter="${line.separator}">
 				<sequential>
-					<propertyregex override="yes" property="data" input="@{line}" regexp="script.*src=&quot;(.*?)&quot;" select="\1" casesensitive="true" defaultvalue=""/>
+
+					
+					
+					<propertyregex override="yes" property="found_start" input="@{line}" regexp="-- START scripts --" select="\1" casesensitive="true" defaultvalue=""/>
+					<propertyregex override="yes" property="found_stop" input="@{line}" regexp="-- END scripts --" select="\1" casesensitive="true" defaultvalue=""/>
 					<if>
 						<and>
-							<isset property="data"/>
-							<not><equals arg1="${data}" arg2=""/></not>
-							<not><contains string="${data}" substring="/less-"/></not>
-							<not><contains string="${data}" substring="/libs/"/></not>
-							<available file="${basedir}/${data}"/>
+							<isset property="found_start"/>
+							<not><equals arg1="${found_start}" arg2=""/></not>
 						</and>
 						<then>
-							<propertyregex override="yes" property="filename" input="${data}" regexp="js/(.*?)\.js" select="\1" casesensitive="true" defaultvalue=""/>
+							<var name="do_validation" value="true"/>
+						</then>
+					</if>
+					<if>
+						<and>
+							<isset property="found_stop"/>
+							<not><equals arg1="${found_stop}" arg2=""/></not>
+						</and>
+						<then>
+							<var name="do_validation" value="false"/>
+						</then>
+					</if>
+					<if>
+						<and>
+							<equals arg1="${do_validation}" arg2="true"/>
+							<not><contains string="@{line}" substring="!--"/></not>
+						</and>
+						<then>
+							<propertyregex override="yes" property="data" input="@{line}" regexp="script.*src=&quot;(.*?)&quot;" select="\1" casesensitive="true" defaultvalue=""/>
 							<if>
 								<and>
-									<isset property="@{showlog}"/>
-									<equals arg1="@{showlog}" arg2="true"/>
+									<isset property="data"/>
+									<not><equals arg1="${data}" arg2=""/></not>
+									<not><contains string="${data}" substring="/libs/"/></not>
+									<available file="${basedir}/${data}"/>
 								</and>
 								<then>
-									<jslint options="${jslint.options}" haltOnFailure="false" encoding="${project.encoding}">
-										<predef>${jslint.predefined}</predef>
-										<formatter type="plain"/>
-										<formatter type="plain" destfile="@{target}/${filename}.txt"/>
-										<fileset dir="${basedir}/">
-											<include name="${data}"/>
-										</fileset>
-									</jslint>
+									<propertyregex override="yes" property="filename" input="${data}" regexp="js/(.*?)\.js" select="\1" casesensitive="true" defaultvalue=""/>
+									<if>
+										<equals arg1="${log_validation}" arg2="true"/>
+										<then>
+											<echo>Validated file: ${data}</echo>
+										</then>
+									</if>
+									<if>
+										<and>
+											<isset property="@{showlog}"/>
+											<equals arg1="@{showlog}" arg2="true"/>
+										</and>
+										<then>
+											<jslint options="${jslint.options}" haltOnFailure="false" encoding="${project.encoding}">
+												<predef>${jslint.predefined}</predef>
+												<formatter type="plain"/>
+												<formatter type="plain" destfile="@{target}/${filename}.txt"/>
+												<fileset dir="${basedir}/">
+													<include name="${data}"/>
+												</fileset>
+											</jslint>
+										</then>
+										<else>
+											<jslint options="${jslint.options}" haltOnFailure="false" encoding="${project.encoding}">
+												<predef>${jslint.predefined}</predef>
+												<formatter type="plain" destfile="@{target}/${filename}.txt"/>
+												<fileset dir="${basedir}/">
+													<include name="${data}"/>
+												</fileset>
+											</jslint>
+										</else>
+									</if>
 								</then>
-								<else>
-									<jslint options="${jslint.options}" haltOnFailure="false" encoding="${project.encoding}">
-										<predef>${jslint.predefined}</predef>
-										<formatter type="plain" destfile="@{target}/${filename}.txt"/>
-										<fileset dir="${basedir}/">
-											<include name="${data}"/>
-										</fileset>
-									</jslint>
-								</else>
 							</if>
 						</then>
 					</if>

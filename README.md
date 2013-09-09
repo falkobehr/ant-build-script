@@ -3,7 +3,7 @@
 
 ## Example
 
-I included an example project where you can see how to define sections for CSS and JavaScript includes
+There is an example project where you can see how to define sections for CSS and JavaScript includes.
 
 
 ## What it does
