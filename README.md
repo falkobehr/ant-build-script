@@ -1,4 +1,4 @@
-# A client-side ANT build script 4.0
+# A client-side ANT build script 4.2
 
 
 ## Example
