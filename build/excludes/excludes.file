@@ -17,3 +17,7 @@ _*.*
 build/**
 doc/**
 log/**
+
+**/css/**
+**/js/**
+**/deploy/**

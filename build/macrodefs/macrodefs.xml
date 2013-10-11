@@ -214,6 +214,17 @@
 					<var name="regex_to_stop" value="-- END scripts --"/>
 				</then>
 			</if>
+			<tstamp>
+				<format property="now" pattern="EEE, d MMM yyyy HH:mm:ss Z" locale="de,De"/>
+			</tstamp>
+			<if>
+				<not>
+					<available file="@{target}"/>
+				</not>
+				<then>
+					<mkdir dir="@{target}"/>
+				</then>
+			</if>
 			<loadfile property="file" srcfile="@{source}"/>
 			<for param="line" list="${file}" delimiter="${line.separator}">
 				<sequential>
@@ -243,70 +254,55 @@
 							<not><contains string="@{line}" substring="!--"/></not>
 						</and>
 						<then>
-
-							
-
-<!--
-							<propertyregex override="yes" property="data" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
+							<if>
+								<contains string="@{line}" substring="&lt;?"/>
+								<then>
+									<propertyregex override="yes" property="data" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
+									<propertyregex override="yes" property="path" input="${data}" regexp="&lt;?(.*?)?&gt;/" replace="" defaultvalue=""/>
+								</then>
+								<else>
+									<propertyregex override="yes" property="path" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
+								</else>
+							</if>
 							<if>
 								<and>
-									<isset property="data"/>
-									<equals arg1="${data}" arg2=""/>
+									<isset property="path"/>
+									<not><equals arg1="${path}" arg2=""/></not>
+									<available file="@{distbase}/${path}"/>
 								</and>
 								<then>
--->
-
-
-									<propertyregex override="yes" property="data" input="@{line}" regexp="${regex}" select="\1" casesensitive="true" defaultvalue=""/>
 									<if>
-										<and>
-											<isset property="data"/>
-											<not><equals arg1="${data}" arg2=""/></not>
-											<available file="@{distbase}/${data}"/>
-										</and>
+										<equals arg1="${log.opt}" arg2="true"/>
 										<then>
-											<if>
-												<equals arg1="${log_optimization}" arg2="true"/>
-												<then>
-													<echo>Added file: ${data}</echo>
-												</then>
-											</if>
-											<if>
-												<equals arg1="${set_header_info}" arg2="true"/>
-												<then>
-													<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
-														<header>
-															/*! ${project.name} v${project.version} - ${project.copyright} - Created: ${TODAY} */
+											<echo message="Added file: ${path}"/>
 
-														</header>
-														<filelist dir="@{distbase}/" files="${data}">
-														</filelist>
-													</concat>
-													<var name="set_header_info" value="false"/>
-												</then>
-												<else>
-													<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
-														<header>
-
-														</header>
-														<filelist dir="@{distbase}/" files="${data}">
-														</filelist>
-													</concat>
-												</else>
-											</if>
 										</then>
 									</if>
-									
-									
-									
-									
-<!--
+									<if>
+										<equals arg1="${set_header_info}" arg2="true"/>
+										<then>
+											<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
+												<header>
+													/*!! ${project.name} v${project.version} - ${project.copyright} - Created: ${now} */
+
+												</header>
+												<filelist dir="@{distbase}/" files="${path}">
+												</filelist>
+											</concat>
+											<var name="set_header_info" value="false"/>
+										</then>
+										<else>
+											<concat destfile="@{target}/${concatfile}" append="true" encoding="${project.encoding}">
+												<header>
+
+												</header>
+												<filelist dir="@{distbase}/" files="${path}">
+												</filelist>
+											</concat>
+										</else>
+									</if>
 								</then>
 							</if>
--->
-							
-							
-							
 						</then>
 					</if>
 				</sequential>
@@ -323,6 +319,11 @@
 		<attribute name="logs"/>
 		<attribute name="alerts"/>
 		<sequential>
+			<replaceregexp match="\/\*!" replace="/*" flags="g">
+				<fileset dir="@{dir}">
+					<include name="@{file}"/>
+				</fileset>
+			</replaceregexp>
 			<if>
 				<equals arg1="@{logs}" arg2="true"/>
 				<then>
@@ -362,15 +363,25 @@
 		<attribute name="source"/>
 		<attribute name="gzip"/>
 		<sequential>
-			<var name="min" value="styles.min.css"/>
+			<var name="file" value="styles.min.css"/>
+			<if>
+				<equals arg1="@{type}" arg2="CSS"/>
+				<then>
+					<replaceregexp match="\/\*!" replace="/*" flags="g">
+						<fileset dir="@{source}">
+							<include name="${file}"/>
+						</fileset>
+					</replaceregexp>
+				</then>
+			</if>
 			<if>
 				<equals arg1="@{type}" arg2="JS"/>
 				<then>
-					<var name="min" value="scripts.min.js"/>
+					<var name="file" value="scripts.min.js"/>
 				</then>
 			</if>
 			<apply executable="java" parallel="false" force="true" dest="@{source}">
-				<fileset dir="@{source}" includes="${min}"/>
+				<fileset dir="@{source}" includes="${file}"/>
 				<arg line="-jar"/>
 				<arg path="${tool.yui}"/>
 				<arg line="--charset ${project.encoding}"/>
@@ -384,7 +395,7 @@
 			<if>
 				<equals arg1="@{gzip}" arg2="true"/>
 				<then>
-					<gzip destfile="@{source}/${min}.gz" src="@{source}/${min}">
+					<gzip destfile="@{source}/${file}.gz" src="@{source}/${file}">
 					</gzip>
 				</then>
 			</if>
@@ -397,8 +408,9 @@
 	<macrodef name="replace_css">
 		<attribute name="dir"/>
 		<attribute name="file"/>
+		<attribute name="additional"/>
 		<sequential>
-			<replaceregexp match="\&lt;!-- START styles --\&gt;(.*?)\&lt;!-- END styles--\&gt;" replace="\&lt;link rel=&quot;stylesheet&quot; href=&quot;css/styles.min.css&quot;\&gt;" flags="gs">
+			<replaceregexp match="\&lt;!-- START styles --\&gt;(.*?)\&lt;!-- END styles --\&gt;" replace="\&lt;link rel=&quot;stylesheet&quot; href=&quot;@{additional}css/styles.min.css&quot;\&gt;" flags="gs">
 				<fileset dir="@{dir}/" includes="@{file}"/>
 			</replaceregexp>
 		</sequential>
@@ -411,7 +423,7 @@
 		<attribute name="dir"/>
 		<attribute name="file"/>
 		<sequential>
-			<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script src=&quot;js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs">
+			<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script src=&quot;@{additional}js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs">
 				<fileset dir="@{dir}/" includes="@{file}"/>
 			</replaceregexp>
 		</sequential>
@@ -484,9 +496,6 @@
 			<loadfile property="file" srcfile="@{source}"/>
 			<for param="line" list="${file}" delimiter="${line.separator}">
 				<sequential>
-
-					
-					
 					<propertyregex override="yes" property="found_start" input="@{line}" regexp="-- START scripts --" select="\1" casesensitive="true" defaultvalue=""/>
 					<propertyregex override="yes" property="found_stop" input="@{line}" regexp="-- END scripts --" select="\1" casesensitive="true" defaultvalue=""/>
 					<if>
@@ -513,20 +522,29 @@
 							<not><contains string="@{line}" substring="!--"/></not>
 						</and>
 						<then>
-							<propertyregex override="yes" property="data" input="@{line}" regexp="script.*src=&quot;(.*?)&quot;" select="\1" casesensitive="true" defaultvalue=""/>
+							<if>
+								<contains string="@{line}" substring="&lt;?"/>
+								<then>
+									<propertyregex override="yes" property="data" input="@{line}" regexp="script.*src=&quot;(.*?)&quot;" select="\1" casesensitive="true" defaultvalue=""/>
+									<propertyregex override="yes" property="path" input="${data}" regexp="&lt;?(.*?)?&gt;/" replace="" defaultvalue=""/>
+								</then>
+								<else>
+									<propertyregex override="yes" property="path" input="@{line}" regexp="script.*src=&quot;(.*?)&quot;" select="\1" casesensitive="true" defaultvalue=""/>
+								</else>
+							</if>
 							<if>
 								<and>
-									<isset property="data"/>
-									<not><equals arg1="${data}" arg2=""/></not>
-									<not><contains string="${data}" substring="/libs/"/></not>
-									<available file="${basedir}/${data}"/>
+									<isset property="path"/>
+									<not><equals arg1="${path}" arg2=""/></not>
+									<not><contains string="${path}" substring="/libs/"/></not>
+									<available file="${basedir}/${path}"/>
 								</and>
 								<then>
-									<propertyregex override="yes" property="filename" input="${data}" regexp="js/(.*?)\.js" select="\1" casesensitive="true" defaultvalue=""/>
+									<propertyregex override="yes" property="filename" input="${path}" regexp="js/(.*?)\.js" select="\1" casesensitive="true" defaultvalue=""/>
 									<if>
-										<equals arg1="${log_validation}" arg2="true"/>
+										<equals arg1="${log.val}" arg2="true"/>
 										<then>
-											<echo>Validated file: ${data}</echo>
+											<echo message="Validated file: ${path}"/>
 										</then>
 									</if>
 									<if>
@@ -540,7 +558,7 @@
 												<formatter type="plain"/>
 												<formatter type="plain" destfile="@{target}/${filename}.txt"/>
 												<fileset dir="${basedir}/">
-													<include name="${data}"/>
+													<include name="${path}"/>
 												</fileset>
 											</jslint>
 										</then>
@@ -549,7 +567,7 @@
 												<predef>${jslint.predefined}</predef>
 												<formatter type="plain" destfile="@{target}/${filename}.txt"/>
 												<fileset dir="${basedir}/">
-													<include name="${data}"/>
+													<include name="${path}"/>
 												</fileset>
 											</jslint>
 										</else>

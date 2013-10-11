@@ -11,8 +11,8 @@
 	<!-- START styles -->
 	<link rel="stylesheet" href="assets/css/reset.css">
 	<!--<link rel="stylesheet" href="assets/css/skip-this-file.css">-->
-	<link rel="stylesheet" href="assets/css/custom.css">
-	<!-- END styles-->
+	<link rel="stylesheet" href="<?php echo get_bloginfo('template_directory'); ?>/assets/css/custom.css">
+	<!-- END styles -->
 
 </head>
 <body>
@@ -28,7 +28,7 @@
 
 	<!-- START scripts -->
 	<script src="assets/js/libs/jquery-1.10.1.js"></script>
-	<script src="assets/js/fn.js"></script>
+	<script src="<?php echo get_bloginfo('template_directory'); ?>/assets/js/fn.js"></script>
 	<!-- END scripts -->
 
 </body>

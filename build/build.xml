@@ -74,8 +74,7 @@
 	<!--init: create timestamp-->
 	<target name="-init">
 		<tstamp>
-			<format property="TODAY" pattern="EEE, d MMM yyyy HH:mm:ss Z" locale="de,De"/>
-			<format property="NOW" pattern="yyyyMMdd-HHmmss" locale="de,De"/>
+			<format property="now" pattern="yyyyMMdd-HHmmss" locale="de,De"/>
 		</tstamp>
 		<echo message="Finished."/>
 	</target>
@@ -84,8 +83,8 @@
 
 	<!--Remove old files and create new distribution directory-->
 	<target name="-clean">
-		<delete dir="${deploy.dir}" verbose="true"/>
-		<mkdir dir="${deploy.dir}"/>
+		<delete dir="${deploy_dir}" verbose="true"/>
+		<mkdir dir="${deploy_dir}"/>
 		<echo message="Finished."/>
 	</target>
 
@@ -102,14 +101,14 @@
 	<!--Optimize CSS files-->
 	<target name="-optimize_css">
 		<if>
-			<equals arg1="${optimize.css}" arg2="true"/>
+			<equals arg1="${css.do_opt}" arg2="true"/>
 			<then>
-				<concat_files distbase="${basedir}" type="CSS" source="${deploy.dir}/${file.css}" target="${deploy.css.dir}"/>
-				<minify_file type="CSS" source="${deploy.css.dir}" gzip="${gzip.css}"/>
+				<concat_files distbase="${basedir}" type="CSS" source="${deploy_dir}/${css.source}" target="${css.deploy_dir}"/>
+				<minify_file type="CSS" source="${css.deploy_dir}" gzip="${css.do_gzip}"/>
 				<echo message="Finished."/>
 			</then>
 			<else>
-				<move_files source="${css.dir}" target="${deploy.css.dir}" type="CSS"/>
+				<move_files source="${css.dir}" target="${css.deploy_dir}" type="CSS"/>
 				<echo message="Skipped CSS optimization."/>
 			</else>
 		</if>
@@ -120,11 +119,11 @@
 	<!--Optimize javascript files-->
 	<target name="-validate_js">
 		<if>
-			<equals arg1="${validate.js}" arg2="true"/>
+			<equals arg1="${js.do_val}" arg2="true"/>
 			<then>
-				<delete dir="${log.dir}"/>
-				<mkdir dir="${log.dir}"/>
-				<validate_js source="${file.js}" target="${log.dir}" showlog="${show.log}"/>
+				<delete dir="${js.log_dir}"/>
+				<mkdir dir="${js.log_dir}"/>
+				<validate_js source="${js.source}" target="${js.log_dir}" showlog="${js.log_show}"/>
 				<echo message="Finished."/>
 			</then>
 			<else>
@@ -138,15 +137,15 @@
 	<!--Optimize javascript files-->
 	<target name="-optimize_js">
 		<if>
-			<equals arg1="${optimize.js}" arg2="true"/>
+			<equals arg1="${js.do_opt}" arg2="true"/>
 			<then>
-				<concat_files distbase="${basedir}" type="JS" source="${deploy.dir}/${file.js}" target="${deploy.js.dir}"/>
-				<remove_logs dir="${deploy.js.dir}" file="scripts.min.js" logs="${remove.logs}" alerts="${remove.alerts}"/>
-				<minify_file type="JS" source="${deploy.js.dir}" gzip="${gzip.js}"/>
+				<concat_files distbase="${basedir}" type="JS" source="${deploy_dir}/${js.source}" target="${js.deploy_dir}"/>
+				<remove_logs dir="${js.deploy_dir}" file="scripts.min.js" logs="${js.remove_logs}" alerts="${js.remove_alerts}"/>
+				<minify_file type="JS" source="${js.deploy_dir}" gzip="${js.do_gzip}"/>
 				<echo message="Finished."/>
 			</then>
 			<else>
-				<move_files source="${js.dir}" target="${deploy.js.dir}" type="JS"/>
+				<move_files source="${js.dir}" target="${js.deploy_dir}" type="JS"/>
 				<echo message="Skipped JS optimization."/>
 			</else>
 		</if>
@@ -156,7 +155,7 @@
 
 	<!--Copy project files to new distribution-->
 	<target name="-move_files">
-		<copy todir="${deploy.dir}" verbose="true">
+		<copy todir="${deploy_dir}" verbose="true">
 			<fileset dir="${basedir}">
 				<include name="**/*"/>
 				<excludesfile name="${build.dir}/excludes/excludes.file"/>
@@ -169,12 +168,12 @@
 
 	<!--Optimize JPG and PNG files-->
 	<target name="-optimize_images">
-		<move_files source="${images.dir}" target="${deploy.images.dir}" type="images"/>
+		<move_files source="${img.dir}" target="${img.deploy_dir}" type="images"/>
 		<if>
-			<equals arg1="${optimize.images}" arg2="true"/>
+			<equals arg1="${img.do_opt}" arg2="true"/>
 			<then>
-				<optimize_png target="${deploy.images.dir}"/>
-				<optimize_jpg target="${deploy.images.dir}"/>
+				<optimize_png target="${img.deploy_dir}"/>
+				<optimize_jpg target="${img.deploy_dir}"/>
 				<echo message="Finished."/>
 			</then>
 			<else>
@@ -188,12 +187,12 @@
 	<!--Create gzipped versions-->
 	<target name="-gzip_fonts">
 		<if>
-			<equals arg1="${gzip.fonts}" arg2="true"/>
+			<equals arg1="${fonts.do_gzip}" arg2="true"/>
 			<then>
-				<gzip_files dir="${font.dir}" include="*.eot"/>
-				<gzip_files dir="${font.dir}" include="*.ttf"/>
-				<gzip_files dir="${font.dir}" include="*.svg"/>
-				<gzip_files dir="${font.dir}" include="*.woff"/>
+				<gzip_files dir="${fonts.dir}" include="*.eot"/>
+				<gzip_files dir="${fonts.dir}" include="*.ttf"/>
+				<gzip_files dir="${fonts.dir}" include="*.svg"/>
+				<gzip_files dir="${fonts.dir}" include="*.woff"/>
 				<echo message="Finished."/>
 			</then>
 			<else>
@@ -207,24 +206,38 @@
 	<!--Optimize markup-->
 	<target name="-optimize_html">
 		<if>
-			<equals arg1="${include.opt.css}" arg2="true"/>
+			<and>
+				<equals arg1="${html.inc_opt_css}" arg2="true"/>
+				<equals arg1="${css.do_opt}" arg2="true"/>
+			</and>
 			<then>
-				<replace_css dir="${deploy.dir}" file="${file.css}"/>
+				<replace_css dir="${deploy_dir}" file="${css.source}" additional="${absolute_path}"/>
 				<echo message="Included optimized CSS file."/>
 			</then>
 		</if>
 		<if>
-			<equals arg1="${include.opt.js}" arg2="true"/>
+			<and>
+				<equals arg1="${html.inc_opt_js}" arg2="true"/>
+				<equals arg1="${js.do_opt}" arg2="true"/>
+			</and>
 			<then>
-				<replace_js dir="${deploy.dir}" file="${file.js}"/>
+				<replace_js dir="${deploy_dir}" file="${js.source}" additional="${absolute_path}"/>
 				<echo message="Included optimized JS file."/>
 			</then>
 		</if>
-		<echo message="Included optimized CSS and JavaScript files."/>
 		<if>
-			<equals arg1="${optimize.html}" arg2="true"/>
+			<and>
+				<not><equals arg1="${html.inc_opt_css}" arg2="true"/></not>
+				<not><equals arg1="${html.inc_opt_js}" arg2="true"/></not>
+			</and>
 			<then>
-				<optimize_html target="${deploy.dir}"/>
+				<echo message="Optimized files are not included."/>
+			</then>
+		</if>
+		<if>
+			<equals arg1="${html.do_opt}" arg2="true"/>
+			<then>
+				<optimize_html target="${deploy_dir}"/>
 				<echo message="Finished."/>
 			</then>
 			<else>
@@ -238,10 +251,13 @@
 	<!--Update 'Last update' value in humans.txt-->
 	<target name="-update_humans_txt">
 		<if>
-			<available file="humans.txt" filepath="${deploy.dir}"/>
+			<available file="humans.txt" filepath="${deploy_dir}"/>
 			<then>
-				<replaceregexp match="LAST-UPDATE" replace="${TODAY}" flags="gs">
-					<fileset dir="${deploy.dir}/" includes="humans.txt"/>
+				<tstamp>
+					<format property="now" pattern="EEE, d MMM yyyy HH:mm:ss Z" locale="de,De"/>
+				</tstamp>
+				<replaceregexp match="LAST-UPDATE" replace="${now}" flags="gs">
+					<fileset dir="${deploy_dir}/" includes="humans.txt"/>
 				</replaceregexp>
 				<echo message="Finished."/>
 			</then>
@@ -276,23 +292,23 @@
 	<!--Deploy CSS-->
 	<target name="deploy.css" depends="-init">
 		<if>
-			<available file="${deploy.css.dir}"/>
+			<available file="${css.deploy_dir}"/>
 			<then>
 				<delete verbose="true">
-					<fileset dir="${deploy.css.dir}">
+					<fileset dir="${css.deploy_dir}">
 						<include name="**/*"/>
 					</fileset>
 				</delete>
 			</then>
 			<else>
-				<mkdir dir="${deploy.css.dir}"/>
+				<mkdir dir="${css.deploy_dir}"/>
 			</else>
 		</if>
 
-		<concat_files distbase="${basedir}" type="CSS" source="${basedir}/${file.css}" target="${deploy.css.dir}"/>
+		<concat_files distbase="${basedir}" type="CSS" source="${basedir}/${css.source}" target="${css.deploy_dir}"/>
 		<echo message="Concatinated CSS files."/>
 
-		<minify_file type="CSS" source="${deploy.css.dir}" gzip="${gzip.css}"/>
+		<minify_file type="CSS" source="${css.deploy_dir}" gzip="${css.do_gzip}"/>
 		<echo message="Minified CSS."/>
 
 		<buildnumber file="${build.dir}/build.num"/>
@@ -304,25 +320,25 @@
 	<!--Deploy JavaScript-->
 	<target name="deploy.js" depends="-init">
 		<if>
-			<available file="${deploy.js.dir}"/>
+			<available file="${js.deploy_dir}"/>
 			<then>
 				<delete verbose="true">
-					<fileset dir="${deploy.js.dir}">
+					<fileset dir="${js.deploy_dir}">
 						<include name="**/*"/>
 					</fileset>
 				</delete>
 			</then>
 			<else>
-				<mkdir dir="${deploy.js.dir}"/>
+				<mkdir dir="${js.deploy_dir}"/>
 			</else>
 		</if>
 
-		<concat_files distbase="${basedir}" type="JS" source="${basedir}/${file.js}" target="${deploy.js.dir}"/>
+		<concat_files distbase="${basedir}" type="JS" source="${basedir}/${js.source}" target="${js.deploy_dir}"/>
 		<echo message="Concatinated CSS files."/>
 
-		<remove_logs dir="${deploy.js.dir}" file="scripts.min.js" logs="${remove.logs}" alerts="${remove.alerts}"/>
+		<remove_logs dir="${js.deploy_dir}" file="scripts.min.js" logs="${js.remove_logs}" alerts="${js.remove_alerts}"/>
 
-		<minify_file type="JS" source="${deploy.js.dir}" gzip="${gzip.js}"/>
+		<minify_file type="JS" source="${js.deploy_dir}" gzip="${js.do_gzip}"/>
 		<echo message="Minified JS."/>
 
 		<buildnumber file="${build.dir}/build.num"/>
@@ -333,17 +349,17 @@
 
 	<!--Validate JS files-->
 	<target name="validate.js">
-		<delete dir="${log.dir}"/>
-		<mkdir dir="${log.dir}"/>
-		<validate_js source="${file.js}" target="${log.dir}" showlog="${show.log}"/>
-		<echo>Finished.</echo>
+		<delete dir="${js.log_dir}"/>
+		<mkdir dir="${js.log_dir}"/>
+		<validate_js source="${js.source}" target="${js.log_dir}" showlog="${js.log_show}"/>
+		<echo message="Finished."/>
 	</target>
 
 
 
 	<!--Deploy PNG files-->
 	<target name="deploy.png">
-		<optimize_png target="${deploy.images.dir}"/>
+		<optimize_png target="${img.deploy_dir}"/>
 		<buildnumber file="${build.dir}/build.num"/>
 		<echo message="Finished."/>
 	</target>
@@ -352,7 +368,7 @@
 
 	<!--Deploy JPG files-->
 	<target name="deploy.jpg">
-		<optimize_jpg target="${deploy.images.dir}"/>
+		<optimize_jpg target="${img.deploy_dir}"/>
 		<buildnumber file="${build.dir}/build.num"/>
 		<echo message="Finished."/>
 	</target>
@@ -361,8 +377,8 @@
 
 	<!--Deploy image files-->
 	<target name="deploy.img">
-		<optimize_png target="${deploy.images.dir}"/>
-		<optimize_jpg target="${deploy.images.dir}"/>
+		<optimize_png target="${img.deploy_dir}"/>
+		<optimize_jpg target="${img.deploy_dir}"/>
 		<buildnumber file="${build.dir}/build.num"/>
 		<echo message="Finished."/>
 	</target>
@@ -373,7 +389,7 @@
 	<target name="archive" depends="-init">
 		<propertyregex property="project.version.underscore" input="${project.version}" regexp="\." replace="_" global="true"/>
 		<buildnumber file="${build.dir}/build.num"/>
-		<zip destfile="${basedir}/${NOW}_${project.short}_v${project.version.underscore}b${build.number}.zip" comment="">
+		<zip destfile="${basedir}/${now}_${project.shortname}_v${project.version.underscore}b${build.number}.zip" comment="">
 			<zipfileset dir="${basedir}" prefix="/" encoding="${project.encoding}">
 				<include name="**/*"/>
 				<excludesfile name="${build.dir}/excludes/excludes_for_backup.file"/>
@@ -393,7 +409,7 @@
 				<include name="**/log/**"/>
 			</fileset>
 		</delete>
-		<delete dir="${deploy.dir}"/>
+		<delete dir="${deploy_dir}"/>
 		<echo message="Finished."/>
 	</target>
 
@@ -403,7 +419,7 @@
 	<target name="backup" depends="-init">
 		<propertyregex property="project.version.underscore" input="${project.version}" regexp="\." replace="_" global="true"/>
 		<buildnumber file="${build.dir}/build.num"/>
-		<zip destfile="${basedir}/${NOW}_${project.short}_v${project.version.underscore}b${build.number}_full_backup.zip" comment="">
+		<zip destfile="${basedir}/${now}_${project.shortname}_v${project.version.underscore}b${build.number}_full_backup.zip" comment="">
 			<zipfileset dir="${basedir}" prefix="/" encoding="${project.encoding}">
 				<include name="**/*"/>
 				<exclude name="*.zip"/>
