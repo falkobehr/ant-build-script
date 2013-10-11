@@ -1,7 +1,7 @@
 # A client-side ANT build script 4.3
 
 
-## Example
+## HowTo
 
 There is an example project where you can see how to define sections for CSS and JavaScript includes.
 
@@ -68,7 +68,7 @@ ant deploy  		# Create a new distribution with optimized CSS, JavaScript, HTML a
 ant deploy.css		# Combine and minify CSS files
 ant deploy.js		# Combine, clean and minify JavaScript files
 
-ant validate.js	# Validate all included JavaScript files
+ant validate.js		# Validate all included JavaScript files
 
 ant deploy.img		# Optimize PNGs and JPGs
 ant deploy.png		# Optimize PNGs
@@ -78,7 +78,7 @@ ant archive			# Creates a backup of your development directory w/o svn, git, dep
 ant backup			# Creates a full backup of your development directory
 ant clean			# Remove all logs, docs, deployed versions
 
-ant help				# Show all possible targets
+ant help			# Show all possible targets
 ```
 
 
