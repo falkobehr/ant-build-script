@@ -422,6 +422,7 @@
 	<macrodef name="replace_js">
 		<attribute name="dir"/>
 		<attribute name="file"/>
+		<attribute name="additional"/>
 		<sequential>
 			<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script src=&quot;@{additional}js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs">
 				<fileset dir="@{dir}/" includes="@{file}"/>
