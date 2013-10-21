@@ -203,7 +203,7 @@
 			<var name="do_concat" value="false"/>
 			<var name="regex_to_start" value="-- START styles --"/>
 			<var name="regex_to_stop" value="-- END styles --"/>
-			<var name="regex" value="&lt;link.*rel=&quot;stylesheet&quot;.*href=&quot;(.*?)&quot;"/>
+			<var name="regex" value="&lt;link.*href=&quot;(.*?)&quot;"/>
 			<var name="concatfile" value="styles.min.css"/>
 			<if>
 				<equals arg1="@{type}" arg2="JS"/>
