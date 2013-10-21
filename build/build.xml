@@ -90,14 +90,6 @@
 
 
 
-	<!--Create gzipped version-->
-	<target name="-gzip">
-		<gzip destfile="${file}.gz" src="${file}">
-		</gzip>
-	</target>
-
-
-
 	<!--Optimize CSS files-->
 	<target name="-optimize_css">
 		<if>
