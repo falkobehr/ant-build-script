@@ -319,7 +319,7 @@
 		<attribute name="logs"/>
 		<attribute name="alerts"/>
 		<sequential>
-			<replaceregexp match="\/\*!" replace="/*" flags="g">
+			<replaceregexp match="\/\*!" replace="/*" flags="g" encoding="${project.encoding}">
 				<fileset dir="@{dir}">
 					<include name="@{file}"/>
 				</fileset>
@@ -327,7 +327,7 @@
 			<if>
 				<equals arg1="@{logs}" arg2="true"/>
 				<then>
-					<replaceregexp match="(console.log\(.*\))" replace="/\*\1\*/" flags="g">
+					<replaceregexp match="(console.log\(.*\))" replace="/\*\1\*/" flags="g" encoding="${project.encoding}">
 						<fileset dir="@{dir}">
 							<include name="@{file}"/>
 						</fileset>
@@ -341,7 +341,7 @@
 			<if>
 				<equals arg1="@{alerts}" arg2="true"/>
 				<then>
-					<replaceregexp match="(alert\(.*\))" replace="/\*\1\*/" flags="g" >
+					<replaceregexp match="(alert\(.*\))" replace="/\*\1\*/" flags="g" encoding="${project.encoding}">
 						<fileset dir="@{dir}">
 							<include name="@{file}"/>
 						</fileset>
@@ -367,7 +367,7 @@
 			<if>
 				<equals arg1="@{type}" arg2="CSS"/>
 				<then>
-					<replaceregexp match="\/\*!" replace="/*" flags="g">
+					<replaceregexp match="\/\*!" replace="/*" flags="g" encoding="${project.encoding}">
 						<fileset dir="@{source}">
 							<include name="${file}"/>
 						</fileset>
@@ -410,7 +410,7 @@
 		<attribute name="file"/>
 		<attribute name="additional"/>
 		<sequential>
-			<replaceregexp match="\&lt;!-- START styles --\&gt;(.*?)\&lt;!-- END styles --\&gt;" replace="\&lt;link rel=&quot;stylesheet&quot; href=&quot;@{additional}css/styles.min.css&quot;\&gt;" flags="gs">
+			<replaceregexp match="\&lt;!-- START styles --\&gt;(.*?)\&lt;!-- END styles --\&gt;" replace="\&lt;link rel=&quot;stylesheet&quot; href=&quot;@{additional}css/styles.min.css&quot;\&gt;" flags="gs" encoding="${project.encoding}">
 				<fileset dir="@{dir}/" includes="@{file}"/>
 			</replaceregexp>
 		</sequential>
@@ -424,7 +424,7 @@
 		<attribute name="file"/>
 		<attribute name="additional"/>
 		<sequential>
-			<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script src=&quot;@{additional}js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs">
+			<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script src=&quot;@{additional}js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs" encoding="${project.encoding}">
 				<fileset dir="@{dir}/" includes="@{file}"/>
 			</replaceregexp>
 		</sequential>
@@ -445,6 +445,7 @@
 				<arg line="--compress-css"/>
 				<arg line="--preserve-php"/>
 				<arg line="--preserve-ssi"/>
+				<arg line="--charset ${project.encoding}"/>
 				<srcfile/>
 				<arg value="-o"/>
 				<mapper type="identity"/>
