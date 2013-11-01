@@ -423,10 +423,21 @@
 		<attribute name="dir"/>
 		<attribute name="file"/>
 		<attribute name="additional"/>
+		<attribute name="deferred" default="false"/>
 		<sequential>
-			<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script src=&quot;@{additional}js/scripts.min.js&quot; defer=&quot;defer&quot; \&gt;\&lt;/script\&gt;" flags="gs" encoding="${project.encoding}">
-				<fileset dir="@{dir}/" includes="@{file}"/>
-			</replaceregexp>
+			<if>
+				<equals arg1="@{deferred}" arg2="true"/>
+				<then>
+					<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script type=&quot;text/javascript&quot;\&gt;function downloadJSAtOnload() { var element = document.createElement(&quot;script&quot;); element.src = &quot;@{additional}js/scripts.min.js&quot;; document.body.appendChild(element); } if (window.addEventListener) { window.addEventListener(&quot;load&quot;, downloadJSAtOnload, false); } else if(window.attachEvent) { window.attachEvent(&quot;onload&quot;, downloadJSAtOnload); } else { window.onload = downloadJSAtOnload; }\&lt;/script\&gt;" flags="gs" encoding="${project.encoding}">
+						<fileset dir="@{dir}/" includes="@{file}"/>
+					</replaceregexp>
+				</then>
+				<else>
+					<replaceregexp match="\&lt;!-- START scripts --\&gt;(.*?)\&lt;!-- END scripts --\&gt;" replace="\&lt;script type=&quot;text/javascript&quot; src=&quot;@{additional}js/scripts.min.js&quot;\&gt;\&lt;/script\&gt;" flags="gs" encoding="${project.encoding}">
+						<fileset dir="@{dir}/" includes="@{file}"/>
+					</replaceregexp>
+				</else>
+			</if>
 		</sequential>
 	</macrodef>
 

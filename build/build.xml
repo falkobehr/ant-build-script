@@ -213,7 +213,7 @@
 				<equals arg1="${js.do_opt}" arg2="true"/>
 			</and>
 			<then>
-				<replace_js dir="${deploy_dir}" file="${js.source}" additional="${absolute_path}"/>
+				<replace_js dir="${deploy_dir}" file="${js.source}" additional="${absolute_path}" deferred="true"/>
 				<echo message="Included optimized JS file."/>
 			</then>
 		</if>
