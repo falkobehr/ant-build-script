@@ -481,6 +481,14 @@
 
 
 
+	<!--Create gzipped version-->
+	<target name="-gzip">
+		<gzip destfile="${file}.gz" src="${file}">
+		</gzip>
+	</target>
+
+
+
 	<!--Gzip files-->
 	<macrodef name="gzip_files">
 		<attribute name="dir"/>
