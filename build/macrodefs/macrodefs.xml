@@ -483,7 +483,7 @@
 
 	<!--Create gzipped version-->
 	<target name="-gzip">
-		<gzip destfile="${file}.gz" src="${file}">
+		<gzip destfile="${theFile}.gz" src="${theFile}">
 		</gzip>
 	</target>
 
@@ -494,7 +494,7 @@
 		<attribute name="dir"/>
 		<attribute name="include"/>
 		<sequential>
-			<foreach target="-gzip" param="file">
+			<foreach target="-gzip" param="theFile">
 				<path>
 					<fileset dir="@{dir}" casesensitive="yes">
 						<include name="@{include}"/>
